@@ -26,6 +26,7 @@ private:
     unsigned int rating;
     std::string title;
     std::string text;
+    mutable unsigned int accessCount = 0;
 
     static const unsigned int min_rating = 1;
     static const unsigned int max_rating = 5;
