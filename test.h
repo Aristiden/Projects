@@ -32,6 +32,8 @@ private:
     static const unsigned int max_rating = 5;
     static const unsigned int max_title_length = 128;
     static const unsigned int max_text_length = 2048;
+    
+protected:
     std::string validateAndTrim(const std::string &str,
                                 unsigned int maxLength,
                                 const std::string &fieldName) const;
