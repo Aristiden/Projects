@@ -8,36 +8,6 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "ext/stb_image_write.h"
 
-// DOCUMENTATION of stb_image.h
-//
-// Limitations:
-//    - no 12-bit-per-channel JPEG
-//    - no JPEGs with arithmetic coding
-//    - GIF always returns *comp=4
-//
-// Basic usage (see HDR discussion below for HDR usage):
-//    int x,y,n;
-//    unsigned char *data = stbi_load(filename, &x, &y, &n, 0);
-//    // ... process data if not NULL ...
-//    // ... x = width, y = height, n = # 8-bit components per pixel ...
-//    // ... replace '0' with '1'..'4' to force that many components per pixel
-//    // ... but 'n' will always be the number that it would have been if you said 0
-//    stbi_image_free(data);
-//
-// Standard parameters:
-//    int *x                 -- outputs image width in pixels
-//    int *y                 -- outputs image height in pixels
-//    int *channels_in_file  -- outputs # of image components in image file
-//    int desired_channels   -- if non-zero, # of image components requested in result
-
-// To query the width, height and component count of an image without having to
-// decode the full file, you can use the stbi_info family of functions:
-//
-//   int x,y,n,ok;
-//   ok = stbi_info(filename, &x, &y, &n);
-//   // returns ok=1 and sets x, y, n if image is a supported format,
-//   // 0 otherwise.
-
 int getPixel(uint8_t *img,int pixel_pos[], int dims[]) {
     unsigned int pixel, width,x,y;
     x = pixel_pos[0];
@@ -117,6 +87,7 @@ void arrayToImage(uint8_t *img, std::vector<std::array<int,2>> points, int dims[
         }
     }
 
+
     int length = points.size();
     int i,j;
     for (int s = 0; s< length; s++) {
@@ -126,6 +97,7 @@ void arrayToImage(uint8_t *img, std::vector<std::array<int,2>> points, int dims[
     }
 
     stbi_write_jpg(filename, width, height, chnnls, img, qual);
+
 }
 
 
@@ -181,12 +153,12 @@ int main()
 
 
     // Writing an image of test pixels
-    int sample_rate = 4; // Plots 1 out of every <sample_rate> points 
+    int sample_rate = 9; // Plots 1 out of every <sample_rate> points 
     std::vector<std::array<int, 2>> data = getLinePoints(image, dimensions, sample_rate);
-    printPoints(data);
+    //printPoints(data);
 
-    int quality = 80; // out of 100
-    arrayToImage(image, data, dimensions, "test.jpg", channels, quality);
+    int quality = 100; // out of 100
+    arrayToImage(image, data, dimensions, "test.jpg", 1, quality);
 
     return 0;
 }
