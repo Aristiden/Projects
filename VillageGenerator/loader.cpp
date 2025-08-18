@@ -51,13 +51,29 @@ void getPixelPrint(uint8_t *img,int pixel_pos[], int dims[]) {
     std::cout << "Value of pixel at (" << pixel_pos[0]<<","<<pixel_pos[1]  << ") = " << getPixel(img, pixel_pos, dims) << std::endl;
 }
 
-std::vector<std::array<int, 2>, unsigned int> getLinePoints(uint8_t *img, int dims[], int sample) {
+int getHits(uint8_t *img, int dims[]) {
     int height,width,hits;
     width = dims[0];
     height = dims[1];
     hits = 0;
 
-    std::vector<std::array<int,2>, unsigned int> line_points;
+    for (int j = 0; j< height; j++) {
+        for (int i = 0; i<width; i++) {
+            if (img[j * width + i] < 128) {
+                hits++;
+            }
+        }
+    }
+    return hits;
+}
+
+std::vector<std::array<int, 2>> getLinePoints(uint8_t *img, int dims[], int sample) {
+    int height,width,hits;
+    width = dims[0];
+    height = dims[1];
+    hits = 0;
+
+    std::vector<std::array<int,2>> line_points;
     std::array<int, 2> position = {0,0};
 
     for (int j = 0; j< height; j++) {
@@ -80,11 +96,26 @@ std::vector<std::array<int, 2>, unsigned int> getLinePoints(uint8_t *img, int di
     return line_points;
 }
 
-uint8_t *arrayToImage(std::vector<std::array<int,2>, unsigned int> points, int dims[]) {
-    uint8_t *img;
-    int height,width;
+void printPoints(std::vector<std::array<int,2>> points) {
+    for (int s = 0; s < points.size(); s++) {
+        std::cout << "("
+        << points[s][0] << ","
+        << points[s][1] << ")" << std::endl;
+        
+    }
+}
+
+
+void arrayToImage(uint8_t *img, std::vector<std::array<int,2>> points, int dims[], const char *filename, int chnnls, int qual) {
+    int height, width;
     width = dims[0];
     height = dims[1];
+
+    for (int j = 0; j< height; j++) {
+        for (int i = 0; i<width; i++) {
+            img[j * width + i] = 255;
+        }
+    }
 
     int length = points.size();
     int i,j;
@@ -94,7 +125,7 @@ uint8_t *arrayToImage(std::vector<std::array<int,2>, unsigned int> points, int d
         img[j * width + i] = 1;
     }
 
-    return img;
+    stbi_write_jpg(filename, width, height, chnnls, img, qual);
 }
 
 
@@ -151,10 +182,11 @@ int main()
 
     // Writing an image of test pixels
     int sample_rate = 4; // Plots 1 out of every <sample_rate> points 
-    std::vector<std::array<int, 2>, unsigned int> data = getLinePoints(image, dimensions, sample_rate);
-    uint8_t *output = arrayToImage(data, dimensions);
+    std::vector<std::array<int, 2>> data = getLinePoints(image, dimensions, sample_rate);
+    printPoints(data);
+
     int quality = 80; // out of 100
-    stbi_write_jpg("test.jpg", width, height, channels, output, quality);
+    arrayToImage(image, data, dimensions, "test.jpg", channels, quality);
 
     return 0;
 }
