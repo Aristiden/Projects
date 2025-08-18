@@ -1,3 +1,4 @@
+#include <iostream>
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
@@ -31,4 +32,15 @@
 //   // returns ok=1 and sets x, y, n if image is a supported format,
 //   // 0 otherwise.
 
+
+int main()
+{
+
 unsigned char *data = stbi_load("village_line.jpg", &x, &y, &n, 0);
+
+
+
+std::cout << data << endl;
+
+return 0;
+}
