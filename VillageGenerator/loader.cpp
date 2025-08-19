@@ -52,8 +52,8 @@ std::vector<std::array<int, 2>> getLinePoints(uint8_t *img, int dims[], int samp
     std::vector<std::array<int,2>> line_points;
     std::array<int, 2> position = {0,0};
 
-    for (int j = 0; j< height; j++) {
-        for (int i = 0; i<width; i++) {
+    for (int j = 0; j < height; j++) {
+        for (int i = 0; i < width; i++) {
             if (img[j * width + i] < 128) {
                 
                 hits++;
@@ -67,7 +67,31 @@ std::vector<std::array<int, 2>> getLinePoints(uint8_t *img, int dims[], int samp
     return line_points;
 }
 
+std::vector<std::array<int, 4>> getPointNormals(std::vector<std::array<int, 2>> line_points) {
+    
+    int x1,x2, y1,y2, dx,dy;
 
+    std::vector<std::array<int, 4>> point_normals;
+    for (int s = 0; s < line_points.size()-1; s++) {
+        x1 = line_points[s][0];
+        y1 = line_points[s][1];
+
+        x2 = line_points[s+1][0];
+        y2 = line_points[s+1][1];
+
+        dx = x2 - x1; 
+        dy = y2 - y1;
+
+        // The normal points are (-dy,dx), (dy,-dx), but those draw a line through the origin
+        // Also, the distance from each normal point to the line is equal to the distance between point 1 and point 2
+        point_normals.push_back({x1, y1, -dy + x1, dx + y1});
+        /*point_normals[s][0] = x1;
+        point_normals[s][1] = y1;
+        point_normals[s][2] = -dy + x1;
+        point_normals[s][3] = dx + y1;*/
+    }
+    return point_normals;
+}
 
 
 // PRINT FORMATTING/VISUALIZATION FUNCTIONS
@@ -105,16 +129,18 @@ void printPoints(std::vector<std::array<int,2>> points) {
     }
 }
 
-void arrayToImage(uint8_t *img, std::vector<std::array<int,2>> points, int dims[], const char *filename, int chnnls, int qual) {
+uint8_t *arrayToImage(uint8_t *img, std::vector<std::array<int,2>> points, int dims[], const char *filename, int chnnls, int qual, bool blank) {
     // Follows std_image_write formatting to produce a white .jpg file with each sample point colored in black
 
     int height, width;
     width = dims[0];
     height = dims[1];
 
-    for (int j = 0; j< height; j++) {
-        for (int i = 0; i<width; i++) {
-            img[j * width + i] = 255;
+    if (blank == true) {
+        for (int j = 0; j< height; j++) {
+            for (int i = 0; i<width; i++) {
+                img[j * width + i] = 255;
+            }
         }
     }
 
@@ -127,6 +153,7 @@ void arrayToImage(uint8_t *img, std::vector<std::array<int,2>> points, int dims[
     }
 
     stbi_write_jpg(filename, width, height, chnnls, img, qual);
+    return img;
 }
 
 /*uint8_t *processImage(uint8_t *img, int dims[]) {
@@ -162,7 +189,7 @@ int main()
     //ok = stbi_info("village_line.jpg", &w, &h, &comp);
     uint8_t *image = stbi_load("village_line.jpg", &width, &height, &channels, 1);
     if(image == NULL) {
-        std::cout << "Error in loading the image\n" << std::endl;
+        std::cout << "Error loading the image\n" << std::endl;
         exit(1);
     }
 
@@ -177,7 +204,16 @@ int main()
 
 
     int quality = 100; // out of 100
-    arrayToImage(image, data, dimensions, "test.jpg", 1, quality);
+    bool blank = true;
+    uint8_t *sampled_image = arrayToImage(image, data, dimensions, "test.jpg", 1, quality, blank);
+    blank = false;
+    std::vector<std::array<int, 4>> normals = getPointNormals(data);
+    std::vector<std::array<int, 2>> normals_data;
+    for (int s = 0; s < normals.size(); s++) {
+        normals_data.push_back({normals[s][2], normals[s][3]});
+    }
+    arrayToImage(sampled_image, normals_data, dimensions, "testNormals.jpg", 1, quality, blank);
+
 
 
     return 0;
