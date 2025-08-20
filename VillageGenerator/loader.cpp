@@ -53,7 +53,7 @@ std::vector<std::array<int, 2>> getLinePoints(uint8_t *img, int dims[], int samp
     std::array<int, 2> position = {0,0};
 
     for (int j = 0; j < height; j++) {
-        for (int i = 0; i < width; i++) {
+        for (int i = width-1; i >= 0; i--) {
             if (img[j * width + i] < 128) {
                 
                 hits++;
@@ -73,6 +73,7 @@ std::vector<std::array<int, 4>> getPointNormals(std::vector<std::array<int, 2>> 
 
     std::vector<std::array<int, 4>> point_normals;
     for (int s = 0; s < line_points.size()-1; s++) {
+        int e;
         x1 = line_points[s][0];
         y1 = line_points[s][1];
 
@@ -82,13 +83,9 @@ std::vector<std::array<int, 4>> getPointNormals(std::vector<std::array<int, 2>> 
         dx = x2 - x1; 
         dy = y2 - y1;
 
-        // The normal points are (-dy,dx), (dy,-dx), but those draw a line through the origin
-        // Also, the distance from each normal point to the line is equal to the distance between point 1 and point 2
+        // The distance from each normal point to the line is equal to the distance between point 1 and point 2
         point_normals.push_back({x1, y1, -dy + x1, dx + y1});
-        /*point_normals[s][0] = x1;
-        point_normals[s][1] = y1;
-        point_normals[s][2] = -dy + x1;
-        point_normals[s][3] = dx + y1;*/
+
     }
     return point_normals;
 }
