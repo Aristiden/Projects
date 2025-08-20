@@ -90,6 +90,10 @@ std::vector<std::array<int, 4>> getPointNormals(std::vector<std::array<int, 2>> 
     return point_normals;
 }
 
+//std::array<std::array<int, 2>, 4> drawBuilding(std::array<int,2> corner, ) {
+
+//}
+
 
 // PRINT FORMATTING/VISUALIZATION FUNCTIONS
 
