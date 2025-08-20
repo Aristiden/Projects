@@ -3,6 +3,9 @@
 #include <stdlib.h>
 #include <vector>
 #include <array>
+#include <cmath>
+#define _USE_MATH_DEFINES
+
 #define STB_IMAGE_IMPLEMENTATION
 #include "ext/stb_image.h"
 #define STB_IMAGE_WRITE_IMPLEMENTATION
@@ -90,9 +93,56 @@ std::vector<std::array<int, 4>> getPointNormals(std::vector<std::array<int, 2>> 
     return point_normals;
 }
 
-//std::array<std::array<int, 2>, 4> drawBuilding(std::array<int,2> corner, ) {
+std::array<std::array<int, 2>, 4> drawBuilding(int corner_index, std::array<int,2> ftprint, std::vector<std::array<int, 4>> normals) {
+    std::array<std::array<int, 2>, 4> building_corners;
+    // Points are listed counterclockwise
+    int length = ftprint[0];
+    int depth = ftprint[1];
 
-//}
+    // Bottom left corner, cornerstone:
+    int x1 = normals[corner_index][2];
+    int y1 = normals[corner_index][3];
+    building_corners[0] = {x1, y1};
+    // Can't actually use x1, y1 for calculations unfortunately because it may need to be changed if the building doesn't fit the road.
+
+    std::array<int, 2> test_normal;
+    int i = 0;
+    float dist = 0;
+    int dx,dy;
+    float test_func;
+
+    while (dist < length) {  // Finds another normal to draw the front wall along
+        i++;
+        test_normal = {normals[corner_index-i][2], normals[corner_index-i][3]};
+        dist = sqrt(pow(building_corners[0][0]-test_normal[0],2) + pow(building_corners[0][1]-test_normal[1],2)); // Prolly should make this into a function
+        dx = test_normal[0] - building_corners[0][0];
+        dy = test_normal[1] - building_corners[0][1];
+        for(int k = 0; k < i; k++) {
+            test_func = (dy/dx)*(normals[corner_index-k][0] - test_normal[0]) + test_normal[1];
+            if (normals[corner_index - k][1] > test_func) {
+                corner_index--;
+                building_corners[0] = {normals[corner_index][2], normals[corner_index][3]};
+                i = 0;
+            }
+        }
+    }
+
+    float theta = atan(dy/dx);
+    int x2 = ceil(length*cos(theta));
+    int y2 = ceil(length*sin(theta));
+    building_corners[1] = {x2, y2};
+
+    int x3 = round(x2 - depth*cos(M_PI_2 - theta));
+    int y3 = round(y2 + depth*cos(M_PI_2 - theta));
+    building_corners[2] = {x3, y3};
+
+    int x4 = round(building_corners[0][0] - depth*cos(M_PI_2 - theta));
+    int y4 = round(building_corners[0][1] - depth*sin(M_PI_2 - theta));
+    building_corners[3] = {x4, y4};
+    
+
+    return building_corners;
+}
 
 
 // PRINT FORMATTING/VISUALIZATION FUNCTIONS
