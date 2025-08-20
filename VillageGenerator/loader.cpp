@@ -140,7 +140,8 @@ std::array<std::array<int, 2>, 4> drawBuilding(int corner_index, std::array<int,
     int y4 = round(building_corners[0][1] - depth*sin(M_PI_2 - theta));
     building_corners[3] = {x4, y4};
     
-
+    // Need to: 
+    //   - Still draw building along line to neighboring normal point if the next point doesn't intersect (function test(s))
     return building_corners;
 }
 
