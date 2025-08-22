@@ -6,6 +6,7 @@
 #include <cmath>
 #define _USE_MATH_DEFINES
 #include <random>
+#include <algorithm>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "ext/stb_image.h"
@@ -183,30 +184,61 @@ std::array<std::array<int, 2>, 4> drawBuilding(int corner_index, std::array<int,
     // Can't actually use x1, y1 for calculations unfortunately because it may need to be changed if the building doesn't fit the road.
 
     std::array<int, 2> test_normal;
-    int i = 0;
+    int i = 1;
     float dist = 0;
-    int dx,dy;
+    int dx,dy, max_k;
     float test_func;
+    bool valid_placement = false;
 
-    while (dist < length) {  // Finds another normal to draw the front wall along
-        i++;
+    while (valid_placement == false) {
+
+        // Finds another normal to draw the front wall along
         test_normal = {nrmals[corner_index-i][2], nrmals[corner_index-i][3]};
 
+        // If that normal is too close to fit the footprint, go to the next normal
         dist = sqrt(pow(building_corners[0][0]-test_normal[0],2) + pow(building_corners[0][1]-test_normal[1],2)); // Prolly should make this into a function
         dx = test_normal[0] - building_corners[0][0];
         dy = test_normal[1] - building_corners[0][1];
-        for(int k = 0; k < i; k++) {
-            test_func = (dy/dx)*(nrmals[corner_index-k][0] - test_normal[0]) + test_normal[1];
-            if (nrmals[corner_index - k][1] > test_func) {
-                stringPrint("fails");
-                corner_index--;
-                building_corners[0] = {nrmals[corner_index][2], nrmals[corner_index][3]};
-                i = 0, dist = 0;
+
+        if (dist < length) {  
+            i++;
+        } else if (dx == 0) {
+            // This condition is met if distance is greater than length and also the drawn line is vertical, which automatically validates the logic implemented thus far
+            valid_placement = true;
+        } else {
+            // Check if any original line points are actually above the front wall drawn by the successful front corners
+            max_k = i*2+1;
+            for(int k = 1; k < i+max_k; k++) {
+                test_func = (dy/dx)*(nrmals[corner_index-k][0] - test_normal[0]) + test_normal[1];
+                //test_func += std::max(dx,dy);
+                if (nrmals[corner_index - k][1] > test_func) {
+                    stringPrint("fails");
+
+                    // Move further down the road instead
+                    corner_index--;
+
+                    // This is the only math that depends on corner_index not done inside this loop (thus far)
+                    building_corners[0] = {nrmals[corner_index][2], nrmals[corner_index][3]};
+
+                    // Reset the loop, break the k loop, but not the while
+                    i = 1, dist = 0, k = i+max_k+1;
+
+                // If you check every test point and it works, go ahead and place
+                } else if (k == i+max_k-1) {
+                    valid_placement = true;
+                }
             }
         }
     }
 
-    float theta = atan(dy/dx);
+    // Since infinity is not calculable, hardcode arctan(infinity) = pi/2: 
+    float theta = 0;
+    if (dx == 0) {
+        theta = M_PI_2;
+    } else {
+        theta = atan(dy/dx);
+    } 
+    
     std::cout << "theta = " << theta << std::endl;
     int x2 = building_corners[0][0] + ceil(length*cos(theta));
     int y2 = building_corners[0][1] + ceil(length*sin(theta));
