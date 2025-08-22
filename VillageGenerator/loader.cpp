@@ -193,6 +193,7 @@ std::array<std::array<int, 2>, 4> drawBuilding(int corner_index, std::array<int,
     int dx,dy, max_k;
     float test_func;
     bool valid_placement = false;
+    int indices_checked = 0;
 
     while (valid_placement == false) {
 
@@ -205,7 +206,14 @@ std::array<std::array<int, 2>, 4> drawBuilding(int corner_index, std::array<int,
         dy = test_normal[1] - building_corners[0][1];
 
         if (dist < length) {  
-            i++;
+            // Don't fall off the list
+            if (corner_index-i > 0) {
+                i++;
+            } else {
+                // Go to maximum corner placement
+                corner_index = nrmals.size() - 1;
+                i = 1, dist = 0;
+            }
         } else if (dx == 0) {
             // This condition is met if distance is greater than length and also the drawn line is vertical, which automatically validates the logic implemented thus far
             valid_placement = true;
@@ -216,10 +224,9 @@ std::array<std::array<int, 2>, 4> drawBuilding(int corner_index, std::array<int,
                 test_func = (dy/dx)*(nrmals[corner_index-k][0] - test_normal[0]) + test_normal[1];
                 //test_func += std::max(dx,dy);
                 if (nrmals[corner_index - k][1] > test_func) {
-                    stringPrint("fails");
-
                     // Move further down the road instead
                     corner_index--;
+                    indices_checked++;
 
                     // This is the only math that depends on corner_index not done inside this loop (thus far)
                     building_corners[0] = {nrmals[corner_index][2], nrmals[corner_index][3]};
@@ -233,6 +240,10 @@ std::array<std::array<int, 2>, 4> drawBuilding(int corner_index, std::array<int,
                 }
             }
         }
+        // Need logic for when you've gone through all indices and can't place the building
+        /*if (indices_checked == nrmals.size()+1) {
+            break;
+        }*/
     }
 
     // Since infinity is not calculable, hardcode arctan(infinity) = pi/2: 
@@ -242,8 +253,8 @@ std::array<std::array<int, 2>, 4> drawBuilding(int corner_index, std::array<int,
     } else {
         theta = atan(dy/dx);
     } 
-    
-    std::cout << "theta = " << theta << std::endl;
+    std::cout << building_corners[0][0] << ", " << building_corners[0][1] << std::endl;
+
     int x2 = building_corners[0][0] + ceil(length*cos(theta));
     int y2 = building_corners[0][1] + ceil(length*sin(theta));
     building_corners[1] = {(int)x2, (int)y2};
@@ -400,8 +411,8 @@ int main()
     std::vector<std::array<int, 2>> building_data;
     int number_of_buildings = 8;
     building_data = drawManyBuildings(number_of_buildings, footprint, normals, dimensions);
-    blank = true;
-    arrayToImage(normals_image, building_data, dimensions, "testBuilding.jpg", 1, quality, blank);
+    // blank = true;
+    // arrayToImage(normals_image, building_data, dimensions, "testBuilding.jpg", 1, quality, blank);
     
 
     image = stbi_load("village_line.jpg", &width, &height, &channels, 1);
