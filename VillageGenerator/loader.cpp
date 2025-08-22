@@ -43,11 +43,15 @@ float gaussianRoller(int n) {
     // Produces a pseudorandom number between 0 and 1 from a pseudo Gaussian centered at 0.5
     //   More n produces more Gaussian!
 
+    std::random_device random_source;
+    std::mt19937 generator(random_source());
+    std::uniform_int_distribution<> uniform_distribution(1, INT_MAX);
+
     float output = 0;
     srand(time(0));
 
     for (int roll = 0; roll < n; roll++) {
-        output += rand() % 6;
+        output += uniform_distribution(generator) % 6;
     }
     output = output/(n*5);
    
