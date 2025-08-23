@@ -58,6 +58,22 @@ float gaussianRoller(int n) {
     return output;
 }
 
+float testFunc(int test_point, std::array<int,2> point1, std::array<int,2> point2) {
+    // Creates a line based on the two-point form and then returns the value of the test point x at the corresponding y value of that line
+    float testFunc = 0;
+    int x1 = point1[0],y1 = point1[1], x2 = point2[0],y2 = point2[1];
+    int deltax = x2 - x1;
+    int deltay = y2 - y1;
+
+    if (deltax == 0) {
+        testFunc = y1*1000;   
+    } else {
+        testFunc = (deltay/deltax)*(test_point - x1) + y1;
+    }
+
+    return testFunc;
+}
+
 int getPixel(uint8_t *img,int pixel_pos[], int dims[]) {
     // This function takes in an image loaded as a 1D array and a desired pixel position, then returns the grayscale value of that pixel
     //    255 = white, 1 (or 0?) = black
@@ -173,6 +189,7 @@ std::array<std::array<int, 2>, 4> drawBuilding(int corner_index, std::array<int,
     // Pixels get counted from top to bottom, so all of my math is upside down. I'm just going to flip it here and then flip it back at the end:
     std::vector<std::array<int, 4>> nrmals;
     nrmals = flipNormalsVertical(normals_list, dims);
+    int max_points = nrmals.size();
     
     std::array<std::array<int, 2>, 4> building_corners;
     // Points are listed counterclockwise
@@ -189,7 +206,7 @@ std::array<std::array<int, 2>, 4> drawBuilding(int corner_index, std::array<int,
 
     std::array<int, 2> test_normal;
     int i = 1;
-    float dist = 0;
+    float dist = 0, theta = 0;
     int dx,dy, max_k;
     float test_func;
     bool valid_placement = false;
@@ -200,60 +217,69 @@ std::array<std::array<int, 2>, 4> drawBuilding(int corner_index, std::array<int,
         // Finds another normal to draw the front wall along
         test_normal = {nrmals[corner_index-i][2], nrmals[corner_index-i][3]};
 
-        // If that normal is too close to fit the footprint, go to the next normal
-        dist = sqrt(pow(building_corners[0][0]-test_normal[0],2) + pow(building_corners[0][1]-test_normal[1],2)); // Prolly should make this into a function
         dx = test_normal[0] - building_corners[0][0];
         dy = test_normal[1] - building_corners[0][1];
 
-        if (dist < length) {  
-            // Don't fall off the list
-            if (corner_index-i > 0) {
-                i++;
-            } else {
-                // Go to maximum corner placement
-                corner_index = nrmals.size() - 1;
-                i = 1, dist = 0;
-            }
-        } else if (dx == 0) {
-            // This condition is met if distance is greater than length and also the drawn line is vertical, which automatically validates the logic implemented thus far
-            valid_placement = true;
-        } else {
-            // Check if any original line points are actually above the front wall drawn by the successful front corners
-            max_k = i*2+1;
-            for(int k = 1; k < i+max_k; k++) {
-                test_func = (dy/dx)*(nrmals[corner_index-k][0] - test_normal[0]) + test_normal[1];
-                //test_func += std::max(dx,dy);
-                if (nrmals[corner_index - k][1] > test_func) {
-                    // Move further down the road instead
-                    corner_index--;
-                    indices_checked++;
+        intPrint(dy);
 
-                    // This is the only math that depends on corner_index not done inside this loop (thus far)
+        if (dx == 0) {
+            theta = M_PI_2;
+        } else {
+            theta = atan(dy/dx);
+        } 
+        std::cout << building_corners[0][0] << ", " << building_corners[0][1] << std::endl;
+
+        int x2 = building_corners[0][0] + ceil(length*cos(theta));
+        int y2 = building_corners[0][1] + ceil(length*sin(theta));
+        building_corners[1] = {(int)x2, (int)y2};
+
+
+        for(int k = 1; k < (max_points-corner_index); k++) {
+            test_func = testFunc(nrmals[corner_index-k][0], building_corners[0], building_corners[1]); 
+
+            // If any road point is above the bottom wall
+            if (nrmals[corner_index - k][1] > test_func) {
+                dist = sqrt(pow(building_corners[0][0]-test_normal[0],2) + pow(building_corners[0][1]-test_normal[1],2)); 
+
+                // If the front wall has moved more normals than it should
+                if (dist > length) {
+                    // Move cornerstone down the road
+                    if (corner_index > 1) {
+                        corner_index--;
+                    } else {
+                        building_corners[0] = {-1, -1};
+                    }
+                    indices_checked++;
+                    // Don't try to go too far from randomized point
+                    if (indices_checked > max_points/6) {
+                        building_corners[0] = {-1, -1};
+                    }
+
+                    // Reset the bottom left building_corner point
                     building_corners[0] = {nrmals[corner_index][2], nrmals[corner_index][3]};
 
-                    // Reset the loop, break the k loop, but not the while
-                    i = 1, dist = 0, k = i+max_k+1;
+                    // Break for loop
+                    k = max_points+1;
 
-                // If you check every test point and it works, go ahead and place
-                } else if (k == i+max_k-1) {
-                    valid_placement = true;
+                // If it can still change normals at this corner point
+                } else {
+                    // Don't fall off the list
+                    if (corner_index-i > 0) {
+                        i++;
+                    } else {
+                        // If you fall off, go to maximum corner placement and start again
+                        corner_index = nrmals.size() - 1;
+                        i = 2, dist = 0;
+                    }
+                    k = max_points+1;
                 }
+            // Stop checking k points if the road point x is passed the test bottom right wall (plus one extra k)
+            } else if (nrmals[corner_index-k][0] > building_corners[1][0]) {
+                valid_placement = true;
+                k = max_points+1;
             }
         }
-        // Need logic for when you've gone through all indices and can't place the building
-        /*if (indices_checked == nrmals.size()+1) {
-            break;
-        }*/
     }
-
-    // Since infinity is not calculable, hardcode arctan(infinity) = pi/2: 
-    float theta = 0;
-    if (dx == 0) {
-        theta = M_PI_2;
-    } else {
-        theta = atan(dy/dx);
-    } 
-    std::cout << building_corners[0][0] << ", " << building_corners[0][1] << std::endl;
 
     int x2 = building_corners[0][0] + ceil(length*cos(theta));
     int y2 = building_corners[0][1] + ceil(length*sin(theta));
@@ -474,4 +500,84 @@ int main()
         }
     }
     return hits;
+}*/
+
+
+
+/*while (valid_placement == false) {
+
+        // Finds another normal to draw the front wall along
+        test_normal = {nrmals[corner_index-i][2], nrmals[corner_index-i][3]};
+
+        // If that normal is too close to fit the footprint, go to the next normal
+        dist = sqrt(pow(building_corners[0][0]-test_normal[0],2) + pow(building_corners[0][1]-test_normal[1],2)); // Prolly should make this into a function
+        dx = test_normal[0] - building_corners[0][0];
+        dy = test_normal[1] - building_corners[0][1];
+
+        if (dist < length) {  
+            // Don't fall off the list
+            if (corner_index-i > 0) {
+                i++;
+
+            } else {
+                // If you fall off, go to maximum corner placement and start again
+                corner_index = nrmals.size() - 1;
+                i = 1, dist = 0;
+            }
+        } else if (dx == 0) {
+            // This condition is met if distance is greater than length and also the drawn line is vertical, which automatically validates the logic implemented thus far
+            valid_placement = true;
+            
+        } else {
+            // Check if any original line points are actually above the front wall drawn by the successful front corners
+            max_k = i*2+1;
+            for(int k = 1; k < i+max_k; k++) {
+                test_func = (dy/dx)*(nrmals[corner_index-k][0] - test_normal[0]) + test_normal[1];
+                //test_func += std::max(dx,dy);
+                if (nrmals[corner_index - k][1] > test_func) {
+                    // Move further down the road instead
+                    corner_index--;
+                    indices_checked++;
+
+                    // This is the only math that depends on corner_index not done inside this loop (thus far)
+                    building_corners[0] = {nrmals[corner_index][2], nrmals[corner_index][3]};
+
+                    // Reset the loop, break the k loop, but not the while
+                    i = 1, dist = 0, k = i+max_k+1;
+
+                // If you check every test point and it works, go ahead and place
+                } else if (k == i+max_k-1) {
+                    valid_placement = true;
+                }
+            }
+        }
+        // Need logic for when you've gone through all indices and can't place the building
+    }
+
+    // Since infinity is not calculable, hardcode arctan(infinity) = pi/2: 
+    float theta = 0;
+    if (dx == 0) {
+        theta = M_PI_2;
+    } else {
+        theta = atan(dy/dx);
+    } 
+    std::cout << building_corners[0][0] << ", " << building_corners[0][1] << std::endl;
+
+    int x2 = building_corners[0][0] + ceil(length*cos(theta));
+    int y2 = building_corners[0][1] + ceil(length*sin(theta));
+    building_corners[1] = {(int)x2, (int)y2};
+
+    int x3 = round(x2 - depth*cos(M_PI_2 - theta));
+    int y3 = round(y2 + depth*sin(M_PI_2 - theta));
+    building_corners[2] = {(int)x3, (int)y3};
+
+    int x4 = round(building_corners[0][0] - depth*cos(M_PI_2 - theta));
+    int y4 = round(building_corners[0][1] + depth*sin(M_PI_2 - theta));
+    building_corners[3] = {(int)x4, (int)y4};
+    
+    // Need to: 
+    //   - Still draw building along line to neighboring normal point if the next point doesn't intersect (function test(s))
+
+    building_corners = flipBuilding(building_corners, dims);
+    return building_corners;
 }*/
