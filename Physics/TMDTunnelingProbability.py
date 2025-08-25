@@ -1,11 +1,15 @@
 # -*- coding: utf-8 -*-
 """
-Created on Mon Apr 14 15:44:08 2025
+Created on Apr 14 2025
 
 Robert Wolle
+George Mason University 
+PHYS784 Quantum Mechanics II Final Project
+ - This program creates monolayer 2D sheets of desired atoms based on input lattice constants, 
+ - calculates their summed electric potential (superposition), 
+ - and then calculates the probability of a particle to tunnel through the sheet based on the WKB approximation.
 
-PHYS784 Final Project
-
+The current set up calculates the likelihood of a local cooper pair (a bad estimation) to tunnel through a layer or two of monolayer Transition Metal Dichalcogenides (TMDs)
 
 """
 
@@ -307,6 +311,7 @@ print('Probability that a Cooper pair tunnels through = ' + '%1.3f'%probability)
 #print('Building took ' + str(built_time-start)[:5] + ' s')
 V_time = time.time()
 print('V calculation and plotting took ' + '%5.2f'%(V_time-built_time) + ' s')
+
 
 
 
