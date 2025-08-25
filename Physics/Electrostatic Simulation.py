@@ -5,6 +5,9 @@ by Robert Wolle
 
 Phys613 Final Project:  Ion Trap Electrostatic Modeling
 
+The goal of this project was to model a particular ion trap in 2D and calculate the electric field in a vertical line at the center of the trap, thus finding where the particle should be constrained.
+It can easily be extended to various geometries since it is implemented by drawing squares and triangles set to a particular voltage, and can even create triangular holes in other shapes.
+
 """
 
 import time
@@ -810,6 +813,7 @@ E_time = time.time()
 print('Calculating E and plotting took ' + str(E_time-V_time) + ' s')
 
 print('Total runtime = ' + str(E_time-start) + ' s')
+
 
 
 
