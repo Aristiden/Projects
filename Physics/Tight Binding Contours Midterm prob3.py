@@ -4,6 +4,8 @@ Created on Mar 12, 2024
 
 by Robert Wolle
 Phys512 Midterm Problem 1c
+
+This program plots contours of equal energy in k-space for input parameters of the tight binding approximation. 
 """
 
 import sys
@@ -63,4 +65,5 @@ for t in t_list:
     plt.contourf(k_x,k_y,E, levels=contours)
     plt.colorbar()
     plt.show()
+
 """
