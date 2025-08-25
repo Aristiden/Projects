@@ -4,6 +4,8 @@ Created on Mar 12, 2024
 
 by Robert Wolle
 Phys512 Midterm Problem 1c
+
+This program calculates and plots energy bands in the Brillouin Zone for graphene
 """
 
 import sys
@@ -83,4 +85,5 @@ for c in range(1,len(contour)):
     k_dist_prev = k_dist[len(k_dist)-1]+k_dist_prev
 
 #plt.gca().set_xticks([])
+
 plt.show()
