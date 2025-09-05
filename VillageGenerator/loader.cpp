@@ -208,6 +208,7 @@ std::array<std::array<int, 2>, 4> drawBuilding(int corner_index, std::array<int,
     int i = 1;
     float dist = 0, theta = 0;
     int dx,dy, max_k;
+    int x2 = 0, y2 = 0;
     float test_func;
     bool valid_placement = false;
     int indices_checked = 0;
@@ -229,13 +230,13 @@ std::array<std::array<int, 2>, 4> drawBuilding(int corner_index, std::array<int,
         } 
         std::cout << building_corners[0][0] << ", " << building_corners[0][1] << std::endl;
 
-        int x2 = building_corners[0][0] + ceil(length*cos(theta));
-        int y2 = building_corners[0][1] + ceil(length*sin(theta));
+        x2 = building_corners[0][0] + ceil(length*cos(theta));
+        y2 = building_corners[0][1] + ceil(length*sin(theta));
         building_corners[1] = {(int)x2, (int)y2};
 
 
         for(int k = 1; k < (max_points-corner_index); k++) {
-            test_func = testFunc(nrmals[corner_index-k][0], building_corners[0], building_corners[1]); 
+            test_func = testFunc(nrmals[corner_index - k][0], building_corners[0], building_corners[1]); 
 
             // If any road point is above the bottom wall
             if (nrmals[corner_index - k][1] > test_func) {
@@ -246,17 +247,19 @@ std::array<std::array<int, 2>, 4> drawBuilding(int corner_index, std::array<int,
                     // Move cornerstone down the road
                     if (corner_index > 1) {
                         corner_index--;
+
+                        // Reset the bottom left building_corner point
+                        building_corners[0] = {nrmals[corner_index][2], nrmals[corner_index][3]};
+                        indices_checked++;
+
                     } else {
                         building_corners[0] = {-1, -1};
                     }
-                    indices_checked++;
+                    
                     // Don't try to go too far from randomized point
                     if (indices_checked > max_points/6) {
                         building_corners[0] = {-1, -1};
                     }
-
-                    // Reset the bottom left building_corner point
-                    building_corners[0] = {nrmals[corner_index][2], nrmals[corner_index][3]};
 
                     // Break for loop
                     k = max_points+1;
@@ -269,20 +272,21 @@ std::array<std::array<int, 2>, 4> drawBuilding(int corner_index, std::array<int,
                     } else {
                         // If you fall off, go to maximum corner placement and start again
                         corner_index = nrmals.size() - 1;
-                        i = 2, dist = 0;
+                        i = 1, dist = 0;
                     }
                     k = max_points+1;
                 }
             // Stop checking k points if the road point x is passed the test bottom right wall (plus one extra k)
             } else if (nrmals[corner_index-k][0] > building_corners[1][0]) {
                 valid_placement = true;
+                std::cout << valid_placement << std::endl;
                 k = max_points+1;
             }
         }
     }
 
-    int x2 = building_corners[0][0] + ceil(length*cos(theta));
-    int y2 = building_corners[0][1] + ceil(length*sin(theta));
+    x2 = building_corners[0][0] + ceil(length*cos(theta));
+    y2 = building_corners[0][1] + ceil(length*sin(theta));
     building_corners[1] = {(int)x2, (int)y2};
 
     int x3 = round(x2 - depth*cos(M_PI_2 - theta));
