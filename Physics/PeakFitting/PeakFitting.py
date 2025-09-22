@@ -51,7 +51,7 @@ def nm_to_eV(wavelength):
 delimiter = '\t'
 data_columns = 3
 data_start = 521     #character position at which the data begins
-file_path = "/workspaces/Projects/Physics/PeakFitting/WSe2_MoSe2_NbSe2_100uW_PL_Flake2Test1.vdat"
+file_path = "/workspaces/Projects/Physics/PeakFitting/WSe2_MoSe2_NbSe2_100uW_PL_NoFlake2Test6.vdat"
 
 
 DataArray = np.array(make_DataArray(delimiter, data_columns, data_start, file_path))
@@ -60,20 +60,26 @@ y_axis = DataArray[:,2]
 
 x_region = [1.4,1.75]
 
-plt.plot(x_axis,y_axis)
+plt.plot(x_axis,y_axis,zorder=2)
 plt.gca().invert_xaxis()
 plt.xlim(x_region)
-plt.title('PL Intensity')
+plt.title('PL Intensity off NbSe2, 10s exposure')
 plt.xlabel('Energy (eV)')
 plt.ylabel('Counts')
 
 
 # Input peak parameters
-n_peaks = 2
+n_peaks = 1
 Background = 600
 
+# Linear Background
+Background = np.zeros(len(x_axis))
+constBackground = 1000
+slopeBackground = 0.2
+
+
 # Formatted [[center_1,width_1,height_1], [center_2,width_2,height_2],...,[center_n,width_n,height_n]]
-peaks = [[1.5715, 0.04,6300], [1.66,0.04,900]]
+peaks = [[1.573, 0.045,16000], [1.663,0.038,0]]
 
 def peakFits(peaks, n_peaks, background, x):
     peakFit = 0
@@ -88,11 +94,12 @@ fit = np.zeros(len(x_axis)) + Background
 for i in range(len(x_axis)):
     x_i = x_axis[i]
     if x_i >= x_region[0] and x_i <= x_region[1]:
-        fit[i] = peakFits(peaks, n_peaks, Background, x_i)
+        Background[i] = constBackground + slopeBackground*i
+        fit[i] = peakFits(peaks, n_peaks, Background[i], x_i)
         loss = loss + (fit[i] - y_axis[i])**2/y_axis**2
 
-plt.plot(x_axis,fit)
-
+plt.plot(x_axis,fit,zorder=1)
+plt.text(1.525, 100, 'Peak at 1.573 eV', fontsize=11)
 plt.savefig('/workspaces/Projects/Physics/PeakFitting/output.png')
 
 
