@@ -40,7 +40,7 @@ def nm_to_eV(wavelength):
 delimiter = '\t'
 data_columns = 3
 data_start = 521     #character position at which the data begins
-file_path = "/workspaces/Projects/Physics/PeakFitting/WSe2_MoSe2_NbSe2_100uW_PL_Flake2Test1.vdat"
+file_path = "/workspaces/Projects/Physics/PeakFitting/WSe2_MoSe2_NbSe2_100uW_PL_Flake3Test8.vdat"
 
 
 DataArray = np.array(make_DataArray(delimiter, data_columns, data_start, file_path))
@@ -48,11 +48,12 @@ x_axis = nm_to_eV(DataArray[:,0])
 y_axis = DataArray[:,2]
 
 
-x_region = [1.4,1.75]
+x_region = [1.2,1.4]
 
 plt.plot(x_axis,y_axis,zorder=2)
 #plt.gca().invert_xaxis()
 #plt.xlim(x_region)
+#plt.ylim(500,1000)
 plt.title('PL Intensity, on NbSe2 10s exposure')
 plt.xlabel('Energy (eV)')
 plt.ylabel('Counts')

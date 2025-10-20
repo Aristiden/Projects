@@ -88,18 +88,69 @@ def peakFits(peaks, n_peaks, background, x):
     return peakFit
     
 
-loss = 0
+loss_previous = 0
+
+peaks_i = np.array(peaks)
+peaks_previous = np.array(peaks)
+
+
+loss_diff = 0
+features_diff = []
 fit = np.zeros(len(x_axis)) + Background
 
-for i in range(len(x_axis)):
-    x_i = x_axis[i]
-    if x_i >= x_region[0] and x_i <= x_region[1]:
-        Background[i] = constBackground + slopeBackground*i
-        fit[i] = peakFits(peaks, n_peaks, Background[i], x_i)
-        loss = loss + (fit[i] - y_axis[i])**2/y_axis**2
+
+def calculateFits(x_axis, x_region, peaks, n_peaks, Background, loss):
+    for i in range(len(x_axis)):
+                x_i = x_axis[i]
+                if x_i >= x_region[0] and x_i <= x_region[1]:
+                    Background[i] = constBackground + slopeBackground*i
+                    fit[i] = peakFits(peaks, n_peaks, Background[i], x_i)
+                    loss = loss + (fit[i] - y_axis[i])**2/y_axis[i]**2
+    return fit, loss
+
+fit,loss_previous = calculateFits(x_axis, x_region, peaks, n_peaks, Background, loss_previous)
+
+
+iterations = 10
+change_rate = 0.01      # iterations change value of the feature by change_rate*100% 
+
+
+
+
+
+# First change:
+loss_i = 0
+for n in range(n_peaks):
+    for k in range(3):
+        peaks_i[n][k] = peaks_previous[n][k] + change_rate*peaks_previous[n][k]
+        fit,loss_i = calculateFits(x_axis, x_region, peaks_i, n_peaks, Background, loss_i)
+
+loss_diff = loss_i - loss_previous
+features_diff = peaks_i - peaks_previous
+
+
+peaks_previous = peaks_i
+loss_previous = loss_i
+
+# Successive iterations
+for i in range(iterations):
+    loss_i = 0
+    for n in range(n_peaks):
+        for k in range(3):
+            print(np.linalg.norm(features_diff))
+            peaks_i[n][k] = peaks_previous[n][k] + loss_diff/np.linalg.norm(features_diff)*peaks_previous[n][k]
+    fit,loss_i = calculateFits(x_axis, x_region, peaks_i, n_peaks, Background, loss_i)
+    loss_diff = loss_i - loss_previous
+    features_diff = peaks_i - peaks_previous
+    peaks_previous = peaks_i
+    loss_previous = loss_i
+
+
+print(loss_i)
+
 
 plt.plot(x_axis,fit,zorder=1)
-plt.text(1.525, 100, 'Peaks at 1.574 and 1.663 eV', fontsize=11)
+plt.text(1.525, 100, 'Peak at 1.573 eV', fontsize=11)
 plt.savefig('/workspaces/Projects/Physics/PeakFitting/output.png')
 
 
